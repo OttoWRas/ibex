@@ -36,7 +36,7 @@ module ibex_load_store_unit #(
 
   // signals to/from ID/EX stage
   input  logic         lsu_we_i,             // write enable                     -> from ID/EX
-  input  logic [1:0]   lsu_type_i,           // data type: word, half word, byte -> from ID/EX
+  input  logic [3:0]   lsu_type_i,           // data type: word, half word, byte -> from ID/EX
   input  logic [31:0]  lsu_wdata_i,          // data to write to memory          -> from ID/EX
   input  logic         lsu_sign_ext_i,       // sign extension                   -> from ID/EX
 
@@ -79,7 +79,7 @@ module ibex_load_store_unit #(
   logic         rdata_update;
   logic [31:8]  rdata_q;
   logic [1:0]   rdata_offset_q;
-  logic [1:0]   data_type_q;
+  logic [4:0]   data_type_q;
   logic         data_sign_ext_q;
   logic         data_we_q;
 
@@ -120,18 +120,18 @@ module ibex_load_store_unit #(
       2'b00: begin // Writing a word
         if (!handle_misaligned_q) begin // first part of potentially misaligned transaction
           unique case (data_offset)
-            2'b00:   data_be = 4'b1111;
-            2'b01:   data_be = 4'b1110;
-            2'b10:   data_be = 4'b1100;
-            2'b11:   data_be = 4'b1000;
+            4'b0000:   data_be = 4'b1111;
+            4'b0001:   data_be = 4'b1110;
+            4'b0010:   data_be = 4'b1100;
+            4'b0011:   data_be = 4'b1000;
             default: data_be = 4'b1111;
           endcase // case (data_offset)
         end else begin // second part of misaligned transaction
           unique case (data_offset)
-            2'b00:   data_be = 4'b0000; // this is not used, but included for completeness
-            2'b01:   data_be = 4'b0001;
-            2'b10:   data_be = 4'b0011;
-            2'b11:   data_be = 4'b0111;
+            4'b0000:   data_be = 4'b0000; // this is not used, but included for completeness
+            4'b0001:   data_be = 4'b0001;
+            4'b0010:   data_be = 4'b0011;
+            4'b0011:   data_be = 4'b0111;
             default: data_be = 4'b1111;
           endcase // case (data_offset)
         end
@@ -199,7 +199,7 @@ module ibex_load_store_unit #(
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       rdata_offset_q  <= 2'h0;
-      data_type_q     <= 2'h0;
+      data_type_q     <= 4'h00;
       data_sign_ext_q <= 1'b0;
       data_we_q       <= 1'b0;
     end else if (ctrl_update) begin
@@ -320,10 +320,10 @@ module ibex_load_store_unit #(
   // select word, half word or byte sign extended version
   always_comb begin
     unique case (data_type_q)
-      2'b00:       data_rdata_ext = rdata_w_ext;
-      2'b01:       data_rdata_ext = rdata_h_ext;
-      2'b10,2'b11: data_rdata_ext = rdata_b_ext;
-      default:     data_rdata_ext = rdata_w_ext;
+      4'b0000:         data_rdata_ext = rdata_w_ext;
+      4'b0001:         data_rdata_ext = rdata_h_ext;
+      4'b0010,4'b0011: data_rdata_ext = rdata_b_ext;
+      default:         data_rdata_ext = rdata_w_ext;
     endcase // case (data_type_q)
   end
 
@@ -360,8 +360,8 @@ module ibex_load_store_unit #(
 
   // check for misaligned accesses that need to be split into two word-aligned accesses
   assign split_misaligned_access =
-      ((lsu_type_i == 2'b00) && (data_offset != 2'b00)) || // misaligned word access
-      ((lsu_type_i == 2'b01) && (data_offset == 2'b11));   // misaligned half-word access
+      ((lsu_type_i == 4'b0000) && (data_offset != 2'b00)) || // misaligned word access
+      ((lsu_type_i == 4'b0001) && (data_offset == 2'b11));   // misaligned half-word access
 
   // FSM
   always_comb begin
@@ -553,6 +553,17 @@ module ibex_load_store_unit #(
   assign store_resp_intg_err_o = data_intg_err & data_rvalid_i & data_we_q;
 
   assign busy_o = (ls_fsm_cs != IDLE);
+
+  // AESPIM accelerator
+  aespim_accelerator (
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .start_i   (data_type_q[3]),
+    .op_code_i (data_type_q[2:0]),
+    .data_in_i (data_rdata_i),
+    .data_out_o(),
+    .done_o    ()
+  );
 
   //////////
   // FCOV //

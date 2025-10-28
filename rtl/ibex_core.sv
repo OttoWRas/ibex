@@ -296,7 +296,7 @@ module ibex_core import ibex_pkg::*; #(
 
   // Data Memory Control
   logic        lsu_we;
-  logic [1:0]  lsu_type;
+  logic [3:0]  lsu_type;
   logic        lsu_sign_ext;
   logic        lsu_req;
   logic        lsu_rdata_valid;
@@ -1765,9 +1765,9 @@ module ibex_core import ibex_pkg::*; #(
   // Byte enable based on data type
   always_comb begin
     unique case (lsu_type)
-      2'b00:   rvfi_mem_mask_int = 4'b1111;
-      2'b01:   rvfi_mem_mask_int = 4'b0011;
-      2'b10:   rvfi_mem_mask_int = 4'b0001;
+      4'b0000:   rvfi_mem_mask_int = 4'b1111;
+      4'b0001:   rvfi_mem_mask_int = 4'b0011;
+      4'b0010:   rvfi_mem_mask_int = 4'b0001;
       default: rvfi_mem_mask_int = 4'b0000;
     endcase
   end

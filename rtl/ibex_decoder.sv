@@ -88,7 +88,7 @@ module ibex_decoder #(
   // LSU
   output logic                 data_req_o,            // start transaction to data memory
   output logic                 data_we_o,             // write enable
-  output logic [1:0]           data_type_o,           // size of transaction: byte, half
+  output logic [4:0]           data_type_o,           // size of transaction: byte, half
                                                       // word or word
   output logic                 data_sign_extension_o, // sign extension for data read from
                                                       // memory
@@ -224,7 +224,7 @@ module ibex_decoder #(
     csr_op                = CSR_OP_READ;
 
     data_we_o             = 1'b0;
-    data_type_o           = 2'b00;
+    data_type_o           = 4'b0000;
     data_sign_extension_o = 1'b0;
     data_req_o            = 1'b0;
 
@@ -307,9 +307,9 @@ module ibex_decoder #(
 
         // store size
         unique case (instr[13:12])
-          2'b00:   data_type_o  = 2'b10; // sb
-          2'b01:   data_type_o  = 2'b01; // sh
-          2'b10:   data_type_o  = 2'b00; // sw
+          2'b00:   data_type_o  = 4'b0010; // sb
+          2'b01:   data_type_o  = 4'b0001; // sh
+          2'b10:   data_type_o  = 4'b0000; // sw
           default: illegal_insn = 1'b1;
         endcase
       end
@@ -317,17 +317,17 @@ module ibex_decoder #(
       OPCODE_LOAD: begin
         rf_ren_a_o          = 1'b1;
         data_req_o          = 1'b1;
-        data_type_o         = 2'b00;
+        data_type_o         = 4'b0000;
 
         // sign/zero extension
         data_sign_extension_o = ~instr[14];
 
         // load size
         unique case (instr[13:12])
-          2'b00: data_type_o = 2'b10; // lb(u)
-          2'b01: data_type_o = 2'b01; // lh(u)
+          2'b00: data_type_o = 4'b0010; // lb(u)
+          2'b01: data_type_o = 4'b0001; // lh(u)
           2'b10: begin
-            data_type_o = 2'b00;      // lw
+            data_type_o = 4'b0000;      // lw
             if (instr[14]) begin
               illegal_insn = 1'b1;    // lwu does not exist
             end
@@ -336,6 +336,12 @@ module ibex_decoder #(
             illegal_insn = 1'b1;
           end
         endcase
+      end
+
+      OPCODE_PIM: begin
+        rf_ren_a_o          = 1'b1;
+        data_req_o          = 1'b1;
+        data_type_o         = {1'b1, instr[14:12]};
       end
 
       /////////
