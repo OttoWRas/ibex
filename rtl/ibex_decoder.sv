@@ -88,7 +88,7 @@ module ibex_decoder #(
   // LSU
   output logic                 data_req_o,            // start transaction to data memory
   output logic                 data_we_o,             // write enable
-  output logic [4:0]           data_type_o,           // size of transaction: byte, half
+  output logic [3:0]           data_type_o,           // size of transaction: byte, half
                                                       // word or word
   output logic                 data_sign_extension_o, // sign extension for data read from
                                                       // memory

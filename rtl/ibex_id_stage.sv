@@ -112,7 +112,7 @@ module ibex_id_stage #(
   // Interface to load store unit
   output logic                      lsu_req_o,
   output logic                      lsu_we_o,
-  output logic [1:0]                lsu_type_o,
+  output logic [3:0]                lsu_type_o,
   output logic                      lsu_sign_ext_o,
   output logic [31:0]               lsu_wdata_o,
 
@@ -285,7 +285,7 @@ module ibex_id_stage #(
 
   // Data Memory Control
   logic        lsu_we;
-  logic [1:0]  lsu_type;
+  logic [3:0]  lsu_type;
   logic        lsu_sign_ext;
   logic        lsu_req, lsu_req_dec;
   logic        data_req_allowed;
