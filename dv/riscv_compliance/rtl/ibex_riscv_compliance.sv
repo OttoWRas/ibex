@@ -32,6 +32,7 @@ module ibex_riscv_compliance (
   parameter bit SecureIbex                = 1'b0;
   parameter bit ICacheScramble            = 1'b0;
   parameter bit DbgTriggerEn              = 1'b0;
+  parameter bit AESPIMAccelerator         = 1'b0;
 
   logic clk_sys, rst_sys_n;
 
@@ -158,7 +159,8 @@ module ibex_riscv_compliance (
       .DmBaseAddr       (32'h00000000      ),
       .DmAddrMask       (32'h00000003      ),
       .DmHaltAddr       (32'h00000000      ),
-      .DmExceptionAddr  (32'h00000000      )
+      .DmExceptionAddr  (32'h00000000      ),
+      .AESPIMAccelerator(AESPIMAccelerator )
     ) u_top (
       .clk_i                  (clk_sys              ),
       .rst_ni                 (rst_sys_n            ),

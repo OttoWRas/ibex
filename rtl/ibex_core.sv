@@ -51,7 +51,8 @@ module ibex_core import ibex_pkg::*; #(
   // mvendorid: encoding of manufacturer/provider
   parameter logic [31:0]            CsrMvendorId     = 32'b0,
   // marchid: encoding of base microarchitecture
-  parameter logic [31:0]            CsrMimpId        = 32'b0
+  parameter logic [31:0]            CsrMimpId        = 32'b0,
+  parameter bit                     AESPIMAccelerator = 1'b0
 ) (
   // Clock and Reset
   input  logic                         clk_i,
@@ -762,8 +763,9 @@ module ibex_core import ibex_pkg::*; #(
   assign lsu_resp_err = lsu_load_err | lsu_store_err;
 
   ibex_load_store_unit #(
-    .MemECC(MemECC),
-    .MemDataWidth(MemDataWidth)
+    .MemECC           (MemECC),
+    .MemDataWidth     (MemDataWidth),
+    .AESPIMAccelerator(AESPIMAccelerator)
   ) load_store_unit_i (
     .clk_i (clk_i),
     .rst_ni(rst_ni),

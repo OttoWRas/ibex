@@ -34,6 +34,7 @@ small:
   PMPNumRegions            : 4
   MHPMCounterNum           : 0
   MHPMCounterWidth         : 40
+  AESPIMAccelerator        : 0
 
 # Configuration to match that used in the OpenTitan project
 opentitan:
@@ -54,6 +55,7 @@ opentitan:
   PMPNumRegions            : 16
   MHPMCounterNum           : 10
   MHPMCounterWidth         : 32
+  AESPIMAccelerator        : 0
 
 # Three-stage pipeline with additional branch traget ALU and 1 cycle multiplier
 # (2 cycles for mulh) so mul does not stall (mulh stall 1 cycles). This is the
@@ -77,6 +79,7 @@ maxperf:
   PMPNumRegions            : 4
   MHPMCounterNum           : 0
   MHPMCounterWidth         : 40
+  AESPIMAccelerator        : 0
 
 # maxperf config above with balanced bitmanip extension and PMP
 maxperf-pmp-bmbalanced:
@@ -97,6 +100,7 @@ maxperf-pmp-bmbalanced:
   PMPNumRegions            : 16
   MHPMCounterNum           : 0
   MHPMCounterWidth         : 40
+  AESPIMAccelerator        : 0
 
 # ========================
 # * OTHER CONFIGURATIONS *
@@ -123,6 +127,7 @@ maxperf-pmp:
   PMPNumRegions            : 16
   MHPMCounterNum           : 0
   MHPMCounterWidth         : 40
+  AESPIMAccelerator        : 0
 
 
 # maxperf-pmp config above with full bitmanip extension
@@ -144,6 +149,7 @@ maxperf-pmp-bmfull:
   PMPNumRegions            : 16
   MHPMCounterNum           : 0
   MHPMCounterWidth         : 40
+  AESPIMAccelerator        : 0
 
 # maxperf-pmp-bmfull config above with icache enabled
 maxperf-pmp-bmfull-icache:
@@ -164,6 +170,7 @@ maxperf-pmp-bmfull-icache:
   PMPNumRegions            : 16
   MHPMCounterNum           : 0
   MHPMCounterWidth         : 40
+  AESPIMAccelerator        : 0
 
 
 # ===============================
@@ -191,4 +198,5 @@ experimental-branch-predictor:
   PMPNumRegions            : 4
   MHPMCounterNum           : 0
   MHPMCounterWidth         : 40
+  AESPIMAccelerator        : 0
 

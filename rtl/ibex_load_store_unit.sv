@@ -16,7 +16,8 @@
 
 module ibex_load_store_unit #(
   parameter bit          MemECC       = 1'b0,
-  parameter int unsigned MemDataWidth = MemECC ? 32 + 7 : 32
+  parameter int unsigned MemDataWidth = MemECC ? 32 + 7 : 32,
+  parameter bit          AESPIMAccelerator = 1'b0
 ) (
   input  logic         clk_i,
   input  logic         rst_ni,
@@ -79,7 +80,7 @@ module ibex_load_store_unit #(
   logic         rdata_update;
   logic [31:8]  rdata_q;
   logic [1:0]   rdata_offset_q;
-  logic [4:0]   data_type_q;
+  logic [3:0]   data_type_q;
   logic         data_sign_ext_q;
   logic         data_we_q;
 
@@ -117,27 +118,27 @@ module ibex_load_store_unit #(
 
   always_comb begin
     unique case (lsu_type_i) // Data type 00 Word, 01 Half word, 11,10 byte
-      2'b00: begin // Writing a word
+      4'b0000: begin // Writing a word
         if (!handle_misaligned_q) begin // first part of potentially misaligned transaction
           unique case (data_offset)
-            4'b0000:   data_be = 4'b1111;
-            4'b0001:   data_be = 4'b1110;
-            4'b0010:   data_be = 4'b1100;
-            4'b0011:   data_be = 4'b1000;
-            default: data_be = 4'b1111;
+            2'b00:   data_be = 4'b1111;
+            2'b01:   data_be = 4'b1110;
+            2'b10:   data_be = 4'b1100;
+            2'b11:   data_be = 4'b1000;
+            default:   data_be = 4'b1111;
           endcase // case (data_offset)
         end else begin // second part of misaligned transaction
           unique case (data_offset)
-            4'b0000:   data_be = 4'b0000; // this is not used, but included for completeness
-            4'b0001:   data_be = 4'b0001;
-            4'b0010:   data_be = 4'b0011;
-            4'b0011:   data_be = 4'b0111;
+            2'b00:   data_be = 4'b0000; // this is not used, but included for completeness
+            2'b01:   data_be = 4'b0001;
+            2'b10:   data_be = 4'b0011;
+            2'b11:   data_be = 4'b0111;
             default: data_be = 4'b1111;
           endcase // case (data_offset)
         end
       end
 
-      2'b01: begin // Writing a half word
+      4'b0001: begin // Writing a half word
         if (!handle_misaligned_q) begin // first part of potentially misaligned transaction
           unique case (data_offset)
             2'b00:   data_be = 4'b0011;
@@ -151,8 +152,8 @@ module ibex_load_store_unit #(
         end
       end
 
-      2'b10,
-      2'b11: begin // Writing a byte
+      4'b0010,
+      4'b0011: begin // Writing a byte
         unique case (data_offset)
           2'b00:   data_be = 4'b0001;
           2'b01:   data_be = 4'b0010;
@@ -554,16 +555,21 @@ module ibex_load_store_unit #(
 
   assign busy_o = (ls_fsm_cs != IDLE);
 
-  // AESPIM accelerator
-  aespim_accelerator (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .start_i   (data_type_q[3]),
-    .op_code_i (data_type_q[2:0]),
-    .data_in_i (data_rdata_i),
-    .data_out_o(),
-    .done_o    ()
-  );
+  generate
+    if (AESPIMAccelerator) begin : gen_aespim_accel
+      // AESPIM accelerator
+      aespim_accelerator u_aes (
+        .clk_i     (clk_i),
+        .rst_ni    (rst_ni),
+        .start_i   (data_type_q[3]),
+        .op_code_i (data_type_q[2:0]),
+        .data_in_i (data_rdata_i),
+        .data_out_o(),
+        .done_o    ()
+      );
+    end
+  endgenerate
+
 
   //////////
   // FCOV //

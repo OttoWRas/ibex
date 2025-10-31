@@ -22,7 +22,7 @@ build-all: build-riscv-compliance build-simple-system \
 # RISC-V compliance
 .PHONY: build-riscv-compliance
 build-riscv-compliance:
-	fusesoc --cores-root=. run --target=sim --setup --build \
+	fusesoc --cores-root=. run --target=sim --run \
 		lowrisc:ibex:ibex_riscv_compliance \
 		$(FUSESOC_CONFIG_OPTS)
 
@@ -57,9 +57,9 @@ run-simple-system: sw-simple-hello | $(Vibex_simple_system)
 
 
 # Lint check
-.PHONY: lint-core-tracing
+.PHONY: lint-core
 lint-core-tracing:
-	fusesoc --cores-root . run --target=lint lowrisc:ibex:ibex_core_tracing \
+	fusesoc --cores-root . run --target=lint lowrisc:ibex:ibex_core \
 		$(FUSESOC_CONFIG_OPTS)
 
 

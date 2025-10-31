@@ -125,6 +125,12 @@ parameters:
     default: 40
     description: Bit width of performance monitor event counters [32/64]
 
+  AESPIMAccelerator:
+    datatype: int
+    paramtype: vlogparam
+    default: 1
+    description: "Enables AES PIM Accelerator"
+
 targets:
   sim:
     default_tool: verilator
@@ -149,6 +155,7 @@ targets:
       - PMPNumRegions
       - MHPMCounterNum
       - MHPMCounterWidth
+      - AESPIMAccelerator
     toplevel: ibex_riscv_compliance
     tools:
       verilator:
