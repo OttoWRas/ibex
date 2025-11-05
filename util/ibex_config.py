@@ -37,7 +37,8 @@ class Config:
         ('PMPGranularity', int),
         ('PMPNumRegions', int),
         ('MHPMCounterNum', int),
-        ('MHPMCounterWidth', int)
+        ('MHPMCounterWidth', int),
+        ('AESPIMAccelerator', bool)
     ]
 
     def __init__(self, yml):
