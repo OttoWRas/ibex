@@ -1,6 +1,6 @@
-// Simple testbench for aespim accelerator
+// Simple testbench for aespim key expansion
 
-module tb_aespim_accelerator;
+module tb_aespim_keyexpansion;
 
   // Clock / reset
   reg         clk;
@@ -13,7 +13,8 @@ module tb_aespim_accelerator;
   wire [31:0] data_out_o;
   wire        done_o;
 
-  logic [31:0] data_in_vec [4] = '{32'hDEAD_BEEF, 32'hDECA_FBAD, 32'hF005_BA11, 32'h09cf4f3c};
+  logic [31:0] data_in_vec [4] = '{32'h2b7e_1516, 32'h28ae_d2a6, 32'habf7_1588, 32'h09cf_4f3c};
+  logic [31:0] expected_data_out_vec [4] = '{32'ha0fa_fe17, 32'h8854_2cb1, 32'h23a3_3939, 32'h2a6c_7605};
   int i_to_j [4] = '{3, 0, 1, 2};
   // Clock generation: 100MHz (10ns period)
   initial begin
@@ -37,8 +38,7 @@ module tb_aespim_accelerator;
       .start_i   (start_i),
       .op_code_i (op_code_i),
       .data_in_i (data_in_i),
-      .data_out_o(data_out_o),
-      .done_o    (done_o)
+      .data_out_o(data_out_o)
   );
   // Simple stimulus / probe (drive the DUT)
   initial begin
@@ -63,22 +63,19 @@ module tb_aespim_accelerator;
       $display("[%0t] OP_LD issued, data_in=0x%08h", $time, data_in_i);
     end
 
-    start_i = 1'b0;
-    @(posedge clk);
-
     op_code_i = 3'b010;  // OP_KEX
     data_in_i = 32'h0000_0000;
-    $display("[%0t] OP_KEXR issued", $time);
-    @(posedge clk);
     start_i = 1'b1;
+    assert (data_out_o == expected_data_out_vec[0]) else $error("[%0t] ERROR: data_out mismatch after OP_KEX", $time);
     @(posedge clk);
 
-    repeat (4) begin
+    repeat (3) begin
       // 2) OP_KEX: request key expansion
       op_code_i = 3'b011;  // OP_KEX
       data_in_i = 32'h0000_0000;
-      @(posedge clk);
       start_i = 1'b1;
+      assert (data_out_o == expected_data_out_vec[0]) else $error("[%0t] ERROR: data_out mismatch after OP_KEX", $time);
+      @(posedge clk);
       $display("[%0t] OP_KEX issued", $time);
     end
 
