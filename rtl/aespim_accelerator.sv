@@ -6,18 +6,9 @@ module aespim_accelerator (
     input  logic [3:0][7:0]       data_in_i,
     output logic [31:0]           data_out_o
 );
+    import aespim_pkg::*;
 
     localparam logic [7:0] GF8_4301 = 8'b00011011; // x^4 + x^3 + x + 1
-
-    typedef enum logic [2:0] {
-        OP_LD   = 3'b000,
-        OP_ST   = 3'b001,
-        OP_KEXI = 3'b010,
-        OP_KEX  = 3'b011,
-        OP_ENCI = 3'b100,
-        OP_ENCM = 3'b101,
-        OP_ENCF = 3'b110
-    } op_code_e;
 
     logic [2:0] op_code = op_code_i[2:0];
     logic [1:0] sr_code = op_code_i[4:3];
@@ -27,7 +18,7 @@ module aespim_accelerator (
     logic [3:0][7:0] sb_i, sb_o;
     generate
         for (genvar i = 0; i < 4; i++) begin : gen_sbox
-            bSbox u_bSbox (
+            aespim_bSbox u_bSbox (
                 .A      (sb_i[i]),
                 .encrypt(sb_f),
                 .Q      (sb_o[i])
@@ -83,17 +74,9 @@ module aespim_accelerator (
                 A = data_in_i ^ C_q[0];
             end
 
-            OP_ENCM: begin
-                tmp = sb_o[0] ^ sb_o[1] ^ sb_o[2] ^ sb_o[3];
+            OP_DECM: begin
 
-                for (int i = 0; i < 4; i++) begin
-                    MIX[i] = {sb_o[i] ^ sb_o[(i-1)%4]}[7] ?
-                      (sb_o[i] ^ tmp ^ ((sb_o[i] ^ sb_o[(i-1)%4]) << 1) ^ GF8_4301) :
-                      (sb_o[i] ^ tmp ^ ((sb_o[i] ^ sb_o[(i-1)%4]) << 1));
-                end
-
-                A = data_in_i ^ MIX;
-
+                A = data_in_i ^ aespim_inv_mixcolumn(sb_o);
             end
 
             OP_ENCF: begin

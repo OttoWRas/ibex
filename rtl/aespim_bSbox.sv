@@ -357,7 +357,7 @@ endmodule
 /* verilator lint_on DECLFILENAME */
 
 /* find either Sbox or its inverse in GF(2^8), by Canright Algorithm */
-module bSbox (
+module aespim_bSbox (
     A,
     encrypt,
     Q
