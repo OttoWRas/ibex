@@ -35,8 +35,9 @@ filesets:
       - rtl/ibex_pmp.sv
       - rtl/ibex_wb_stage.sv
       - rtl/ibex_dummy_instr.sv
+      - rtl/aespim_pkg.sv
       - rtl/aespim_accelerator.sv
-      - rtl/bSbox.sv
+      - rtl/aespim_bSbox.sv
       - rtl/ibex_core.sv
     file_type: systemVerilogSource
 
