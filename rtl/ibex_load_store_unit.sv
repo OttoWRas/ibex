@@ -564,8 +564,7 @@ module ibex_load_store_unit #(
         .start_i   (data_type_q[3]),
         .op_code_i (data_type_q[2:0]),
         .data_in_i (data_rdata_i),
-        .data_out_o(),
-        .done_o    ()
+        .data_out_o()
       );
     end
   endgenerate
