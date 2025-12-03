@@ -200,3 +200,22 @@ experimental-branch-predictor:
   MHPMCounterWidth         : 40
   AESPIMAccelerator        : 0
 
+experimental-aespim:
+  RV32E                    : 0
+  RV32M                    : "ibex_pkg::RV32MFast"
+  RV32B                    : "ibex_pkg::RV32BNone"
+  RegFile                  : "ibex_pkg::RegFileFF"
+  BranchTargetALU          : 1
+  WritebackStage           : 1
+  ICache                   : 1
+  ICacheECC                : 0
+  ICacheScramble           : 0
+  BranchPredictor          : 0
+  DbgTriggerEn             : 0
+  SecureIbex               : 0
+  PMPEnable                : 1
+  PMPGranularity           : 0
+  PMPNumRegions            : 16
+  MHPMCounterNum           : 0
+  MHPMCounterWidth         : 40
+  AESPIMAccelerator        : 1

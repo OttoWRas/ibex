@@ -38,6 +38,9 @@ filesets:
       - rtl/aespim_pkg.sv
       - rtl/aespim_accelerator.sv
       - rtl/aespim_bSbox.sv
+      - rtl/aespim_reduce_shift.sv
+      - rtl/aespim_gmul.sv
+      - rtl/aespim_clmul32.sv
       - rtl/ibex_core.sv
     file_type: systemVerilogSource
 
