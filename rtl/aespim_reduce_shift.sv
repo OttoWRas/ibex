@@ -1,33 +1,52 @@
-module reduce_shift_gf128 (
+`define M_DEBUG
+
+module aespim_reduce_shift (
     input  logic  [63:0]  product,
     input  logic  [2:0]   shift_idx,   // 0..6 -> shift by 0,32,64,...,192
     output logic  [31:0]  C0,
     output logic  [31:0]  C1,
-    output logic  [5:0]   C3
+    output logic  [7:0]   C3
 );
 
     import aespim_pkg::CLMUL32_BASIS;
 
     logic [31:0] P_low  = product[31:0];
     logic [31:0] P_high = product[63:32];
-    logic [39:0] P_high_reduced, P_low_reduced, P_high_double_reduced;
+    logic [39:0] P_high_reduced, P_low_reduced;
+    logic [39:0]  P_high_double_reduced;
 
     // Reduction modulo x^32 + x^17 + x^15 + x^14 + 1
 
     always_comb begin
-        for (int i = 0; i < 32; i = i + 1) begin
-            P_high_reduced ^= {$bits(CLMUL32_BASIS[0]){P_high[i]}} & CLMUL32_BASIS[i];
-            P_low_reduced  ^= {$bits(CLMUL32_BASIS[0]){P_low[i]}}  & CLMUL32_BASIS[i];
-            P_high_double_reduced ^= {$bits(CLMUL32_BASIS[0]){P_high_reduced[i]}} & CLMUL32_BASIS[i];
+        // temporary accumulators
+        logic [39:0] lo_acc  = '0;
+        logic [39:0] hi_acc  = '0;
+        logic [39:0] dhi_acc = '0;
+
+        for (int i = 0; i < 32; i++) begin
+            lo_acc  ^= ({$bits(CLMUL32_BASIS[0]){P_low[i]}}  & CLMUL32_BASIS[i]);
+            hi_acc  ^= ({$bits(CLMUL32_BASIS[0]){P_high[i]}} & CLMUL32_BASIS[i]);
         end
+
+        for (int i = 0; i < 8; i++) begin
+            dhi_acc ^= ({$bits(CLMUL32_BASIS[0]){hi_acc[32 + i]}} & CLMUL32_BASIS[i]);
+        end
+
+        // update outputs *after* accumulation
+        P_low_reduced          = lo_acc;
+        P_high_reduced         = hi_acc;
+        P_high_double_reduced  = dhi_acc;
     end
 
     always_comb begin
+        C0 = 32'd0;
+        C1 = 32'd0;
+        C3 = 8'd0;
         unique case (shift_idx)
             0, 1, 2: begin : gen_no_reduce_shift
                 C0 = P_low;
                 C1 = P_high;
-                C3 = 7'd0;
+                C3 = 8'd0;
             end
 
             3 : begin : gen_partly_reduce_shift
@@ -38,18 +57,16 @@ module reduce_shift_gf128 (
 
             4, 5: begin : gen_reduce_shift
                 C0 = P_low_reduced[31:0];
-                C1 = P_high_reduced[31:0] ^ P_low_reduced[39:8];
+                C1 = P_high_reduced[31:0] ^ {24'd0, P_low_reduced[39:32]};
                 C3 = P_high_reduced[39:32];
             end
 
             6: begin : gen_fully_reduce_shift
-                C0 = P_low_reduced[31:0];
-                C1 = P_high_reduced[31:0] ^ P_low_reduced[39:8];
-                C3 = P_high_double_reduced[7:0];
+                C0 = P_low_reduced[31:0] ^ {24'd0, P_high_double_reduced[7:0]};
+                C1 = P_high_reduced[31:0] ^ {24'd0, P_low_reduced[39:32]};
             end
 
         endcase
     end
-
 
 endmodule

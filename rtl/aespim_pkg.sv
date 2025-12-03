@@ -8,7 +8,7 @@ package aespim_pkg;
         OP_ENCI = 3'b100,
         OP_ENCM = 3'b101,
         OP_ENCF = 3'b110,
-        OP_DECM = 3'b111
+        OP_GMUL = 3'b111
     } op_code_e;
 
     function automatic [3:0][7:0] aespim_mixcolumn(input logic [3:0][7:0] state);

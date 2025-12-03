@@ -2,8 +2,9 @@ module aespim_accelerator (
     input  logic                  clk_i,
     input  logic                  rst_ni,
     input  logic                  start_i,
-    input  logic [4:0]            op_code_i,
-    input  logic [3:0][7:0]       data_in_i,
+    input  logic [5:0]            op_code_i,
+    input  logic [3:0][7:0]       data_in_mem_i,
+    input  logic [3:0][7:0]       data_in_reg_i,
     output logic [31:0]           data_out_o
 );
     import aespim_pkg::*;
@@ -11,7 +12,7 @@ module aespim_accelerator (
     localparam logic [7:0] GF8_4301 = 8'b00011011; // x^4 + x^3 + x + 1
 
     logic [2:0] op_code = op_code_i[2:0];
-    logic [1:0] sr_code = op_code_i[4:3];
+    logic [2:0] sr_code = op_code_i[5:3];
 
     // SBox instances and wiring
     logic sb_f;
@@ -33,7 +34,20 @@ module aespim_accelerator (
     logic [3:0][7:0] A;
     logic [3:0][7:0] B;
     logic [3:0][7:0] MIX;
-    logic [1:0] SR;
+    logic [2:0] SR;
+    assign SR = sr_code;
+
+    // GF Multiplier instance
+    logic [31:0] gf_c0, gf_c1;
+    logic [7:0]  gf_c3;
+    aespim_gmul u_gmul (
+        .A (data_in_mem_i),
+        .B (data_in_reg_i),
+        .S (SR),
+        .C0(gf_c0),
+        .C1(gf_c1),
+        .C3(gf_c3)
+    );
 
     logic [7:0] tmp;
 
@@ -42,7 +56,7 @@ module aespim_accelerator (
         A          = 32'd0;
         B          = 32'd0;
         MIX        = 32'd0;
-        SR         = sr_code;
+        //SR         = sr_code;
         data_out_o = 32'd0;
         sb_i       = C_q[0];
         sb_f       = 1'b1;
@@ -50,7 +64,7 @@ module aespim_accelerator (
 
         case(op_code)
             OP_LD: begin
-                A = data_in_i;
+                A = data_in_mem_i;
             end
 
             OP_ST: begin
@@ -71,16 +85,17 @@ module aespim_accelerator (
             end
 
             OP_ENCI: begin
-                A = data_in_i ^ C_q[0];
-            end
-
-            OP_DECM: begin
-
-                A = data_in_i ^ aespim_inv_mixcolumn(sb_o);
+                A = data_in_mem_i ^ C_q[0];
             end
 
             OP_ENCF: begin
-                A = data_in_i ^ sb_o;
+                A = data_in_mem_i ^ sb_o;
+            end
+
+            OP_GMUL: begin
+                A = C_d[0] ^ gf_c0;
+                B = gf_c1;
+                // Implement GF multiplication logic here
             end
 
             default: begin
@@ -96,14 +111,22 @@ module aespim_accelerator (
         end
 
         //Shift row operation
-        for (int i = 1; i <= SR; i++) begin
-            //$display("[%0t] Shift Row A %0d, %0d %00h", $time, 3-i ,i-1, A[i-1]);
-            C_d[3-i][i-1] = A[i-1];
-            for (int j = 0; j < i; j++) begin
-                //$display("[%0t] Shift Row S %0d, %0d", $time, 3-j ,i-1);
-                C_d[3-j][i-1] = C_q[3-j][i-1];
+        case (op_code)
+            OP_ENCI, OP_ENCM, OP_ENCF: begin
+                for (int i = 1; i <= SR; i++) begin
+                    //$display("[%0t] Shift Row A %0d, %0d %00h", $time, 3-i ,i-1, A[i-1]);
+                    C_d[3-i][i-1] = A[i-1];
+                    for (int j = 0; j < i; j++) begin
+                        //$display("[%0t] Shift Row S %0d, %0d", $time, 3-j ,i-1);
+                        C_d[3-j][i-1] = C_q[3-j][i-1];
+                    end
+                end
             end
-        end
+            OP_GMUL: begin
+                C_d[1] = C_q[2] ^ {24'd0, gf_c3};
+            end
+            default: ; // no shift
+        endcase
 
     end
 
