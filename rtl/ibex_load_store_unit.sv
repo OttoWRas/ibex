@@ -80,7 +80,7 @@ module ibex_load_store_unit #(
   logic         rdata_update;
   logic [31:8]  rdata_q;
   logic [1:0]   rdata_offset_q;
-  logic [3:0]   data_type_q;
+  logic [5:0]   data_type_q;
   logic         data_sign_ext_q;
   logic         data_we_q;
 
@@ -90,6 +90,7 @@ module ibex_load_store_unit #(
   logic [31:0]  data_wdata;
 
   logic [31:0]  data_rdata_ext;
+  logic [31:0]  data_rdata_aespim;
 
   logic [31:0]  rdata_w_ext; // word realignment for misaligned loads
   logic [31:0]  rdata_h_ext; // sign extension for half words
@@ -200,7 +201,7 @@ module ibex_load_store_unit #(
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       rdata_offset_q  <= 2'h0;
-      data_type_q     <= 4'h00;
+      data_type_q     <= 6'h00;
       data_sign_ext_q <= 1'b0;
       data_we_q       <= 1'b0;
     end else if (ctrl_update) begin
@@ -321,10 +322,10 @@ module ibex_load_store_unit #(
   // select word, half word or byte sign extended version
   always_comb begin
     unique case (data_type_q)
-      4'b0000:         data_rdata_ext = rdata_w_ext;
-      4'b0001:         data_rdata_ext = rdata_h_ext;
-      4'b0010,4'b0011: data_rdata_ext = rdata_b_ext;
-      default:         data_rdata_ext = rdata_w_ext;
+      6'b000000:           data_rdata_ext = rdata_w_ext;
+      6'b000001:           data_rdata_ext = rdata_h_ext;
+      6'b000010,6'b000011: data_rdata_ext = rdata_b_ext;
+      default:             data_rdata_ext = rdata_w_ext;
     endcase // case (data_type_q)
   end
 
@@ -512,7 +513,7 @@ module ibex_load_store_unit #(
     (ls_fsm_cs == IDLE) & data_rvalid_i & ~data_or_pmp_err & ~data_we_q & ~data_intg_err;
 
   // output to register file
-  assign lsu_rdata_o = data_rdata_ext;
+  assign lsu_rdata_o = data_type_q[3] ? data_rdata_aespim : data_rdata_ext;
 
   // output data address must be word aligned
   assign data_addr_w_aligned = {data_addr[31:2], 2'b00};
@@ -555,6 +556,7 @@ module ibex_load_store_unit #(
 
   assign busy_o = (ls_fsm_cs != IDLE);
 
+
   generate
     if (AESPIMAccelerator) begin : gen_aespim_accel
       // AESPIM accelerator
@@ -562,9 +564,10 @@ module ibex_load_store_unit #(
         .clk_i     (clk_i),
         .rst_ni    (rst_ni),
         .start_i   (data_type_q[3]),
-        .op_code_i (data_type_q[2:0]),
-        .data_in_i (data_rdata_i),
-        .data_out_o()
+        .op_code_i ({data_type_q[5:4], data_type_q[2:0]}),
+        .data_in_mem_i (data_rdata_i),
+        .data_in_reg_i (lsu_wdata_i),
+        .data_out_o    (data_rdata_aespim)
       );
     end
   endgenerate

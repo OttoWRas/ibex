@@ -1,4 +1,6 @@
 `define M_DEBUG
+/* verilator lint_off UNUSEDSIGNAL */
+/* verilator lint_off UNDRIVEN */
 
 module aespim_reduce_shift (
     input  logic  [63:0]  product,
@@ -70,3 +72,4 @@ module aespim_reduce_shift (
     end
 
 endmodule
+// verilator lint_on UNUSEDSIGNAL

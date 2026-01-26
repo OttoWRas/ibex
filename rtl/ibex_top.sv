@@ -3,6 +3,8 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
+// verilator lint_off UNUSEDSIGNAL
+
 `ifdef RISCV_FORMAL
   `define RVFI
 `endif
@@ -55,7 +57,7 @@ module ibex_top import ibex_pkg::*; #(
   parameter logic [31:0]            CsrMimpId                    = 32'b0,
   parameter bit                     AESPIMAccelerator            = 1'b0 
 ) (
-  // Clock and Reset
+  // Clock and Reset// verilator lint_off UNUSEDSIGNAL
   input  logic                         clk_i,
   input  logic                         rst_ni,
 
@@ -1386,3 +1388,4 @@ module ibex_top import ibex_pkg::*; #(
   end
   `endif
 endmodule
+// verilator lint_on UNUSEDSIGNAL

@@ -1,3 +1,6 @@
+/* verilator lint_off UNUSEDSIGNAL */
+/* verilator lint_off UNUSEDPARAM */
+
 module aespim_accelerator (
     input  logic                  clk_i,
     input  logic                  rst_ni,
