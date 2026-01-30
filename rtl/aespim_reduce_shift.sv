@@ -18,20 +18,39 @@ module aespim_reduce_shift (
     logic [39:0]  P_high_double_reduced;
 
     // Reduction modulo x^32 + x^17 + x^15 + x^14 + 1
+    logic [39:0] lo_acc;
+    logic [39:0] hi_acc;
+    logic [39:0] dhi_acc;
 
     always_comb begin
         // temporary accumulators
-        logic [39:0] lo_acc  = '0;
-        logic [39:0] hi_acc  = '0;
-        logic [39:0] dhi_acc = '0;
+
+        lo_acc  = 0;
+        hi_acc  = 0;
+        dhi_acc = 0;
 
         for (int i = 0; i < 32; i++) begin
-            lo_acc  ^= ({$bits(CLMUL32_BASIS[0]){P_low[i]}}  & CLMUL32_BASIS[i]);
-            hi_acc  ^= ({$bits(CLMUL32_BASIS[0]){P_high[i]}} & CLMUL32_BASIS[i]);
+            if (P_low[i]) begin
+                lo_acc[i]    ^= 1'b1;
+                lo_acc[i+1]  ^= 1'b1;
+                lo_acc[i+2]  ^= 1'b1;
+                lo_acc[i+7]  ^= 1'b1;
+            end
+            if (P_high[i]) begin
+                hi_acc[i]    ^= 1'b1;
+                hi_acc[i+1]  ^= 1'b1;
+                hi_acc[i+2]  ^= 1'b1;
+                hi_acc[i+7]  ^= 1'b1;
+            end
         end
 
         for (int i = 0; i < 8; i++) begin
-            dhi_acc ^= ({$bits(CLMUL32_BASIS[0]){hi_acc[32 + i]}} & CLMUL32_BASIS[i]);
+            if (hi_acc[32 + i]) begin
+                dhi_acc[i]    ^= 1'b1;
+                dhi_acc[i+1]  ^= 1'b1;
+                dhi_acc[i+2]  ^= 1'b1;
+                dhi_acc[i+7]  ^= 1'b1;
+            end
         end
 
         // update outputs *after* accumulation
