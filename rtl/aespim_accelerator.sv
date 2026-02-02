@@ -91,6 +91,18 @@ module aespim_accelerator (
                 A = data_in_mem_i ^ C_q[0];
             end
 
+            OP_ENCM: begin
+                tmp = sb_o[0] ^ sb_o[1] ^ sb_o[2] ^ sb_o[3];
+
+                for (int i = 0; i < 4; i++) begin
+                    MIX[i] = {sb_o[i] ^ sb_o[(i-1)%4]}[7] ?
+                      (sb_o[i] ^ tmp ^ ((sb_o[i] ^ sb_o[(i-1)%4]) << 1) ^ GF8_4301) :
+                      (sb_o[i] ^ tmp ^ ((sb_o[i] ^ sb_o[(i-1)%4]) << 1));
+                end
+
+                A = data_in_mem_i ^ MIX;
+            end
+
             OP_ENCF: begin
                 A = data_in_mem_i ^ sb_o;
             end
