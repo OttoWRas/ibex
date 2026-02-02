@@ -54,8 +54,9 @@ module tb_aespim_encryption;
       .clk_i     (clk),
       .rst_ni    (rst_n),
       .start_i   (start_i),
-      .op_code_i (op_code_i),
-      .data_in_i (data_in_i),
+      .op_code_i ({1'b0, op_code_i}),
+      .data_in_mem_i (data_in_i),
+      .data_in_reg_i (),
       .data_out_o(data_out_o)
   );
   // Simple stimulus / probe (drive the DUT)
